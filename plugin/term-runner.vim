@@ -1,5 +1,7 @@
 " term-runner - wrapper to use Neovim's terminal as a runner
 " Maintainer:   David M <david.mejorado@gmail.com>
+" Version:      0.1
+"
 " Inspired from VtrRunner, by Chris Toomey
 " https://github.com/christoomey/vim-tmux-runner
 
