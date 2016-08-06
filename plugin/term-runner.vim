@@ -14,21 +14,28 @@ let g:term_runner_shell = get(g:, 'term_runner_shell', $SHELL)
 
 let g:term_runner_pid = v:false
 
+let g:term_runner_default_mappings = get(g:, 'term_runner_default_mappings',
+    \[{ 'key': 'e', 'fn': 'TermRunner' }
+    \,{ 'key': 't', 'fn': 'TermRunnerTab' }
+    \,{ 'key': 's', 'fn': 'TermRunnerSplit' }
+    \,{ 'key': 'v', 'fn': 'TermRunnerVSplit' }
+    \,{ 'key': 'f', 'fn': 'TermRunnerFocus' }
+    \,{ 'key': '!', 'fn': 'TermRunnerCmd' }
+    \,{ 'key': 'k', 'fn': 'TermRunnerKill' }
+    \]
+\)
+
 function! s:openrunner(target, ...) abort
     let l:start_writing = (a:0 >= 2) ? a:2 : v:false
-    " open a new buffer on the specified target
     exec 'bot' a:target
-    " start the terminal there
     exec printf('terminal//%s', g:term_runner_shell)
-    " grab the job id for the runner
     let g:term_runner_pid = b:terminal_job_id
-    " rename the buffer
     file TermRunner
     if l:start_writing
         startinsert
     else
-        " return to the previous mark
         exec 'wincmd p'
+        stopinsert
     endif
 endfunction
 
@@ -44,28 +51,32 @@ function! s:killrunner() abort
     call jobstop(g:term_runner_pid)
 endfunction
 
+function! s:clearterm() abort
+    let g:term_runner_pid = v:false
+    bdelete! TermRunner
+endfunction
+
+function! s:focusrunner() abort
+    if g:term_runner_pid == v:false
+        echom 'No runner to zoom into'
+    else
+        tabnew TermRunner
+        startinsert
+    end
+endfunction
+
 augroup TermRunner
     autocmd!
-    autocmd TermClose TermRunner let g:term_runner_pid = v:false
+    autocmd TermClose TermRunner call <SID>clearterm()
 augroup END
 
 nnoremap <silent> <Plug>TermRunner       :call <SID>openrunner('', v:true)<CR>
 nnoremap <silent> <Plug>TermRunnerTab    :call <SID>openrunner('tabedit', v:true)<CR>
 nnoremap <silent> <Plug>TermRunnerSplit  :call <SID>openrunner('wincmd s')<CR>
 nnoremap <silent> <Plug>TermRunnerVSplit :call <SID>openrunner('wincmd v')<CR>
-nnoremap <silent> <Plug>TermSendCmd      :call <SID>sendtorunner('runner > ')<CR>
+nnoremap <silent> <Plug>TermRunnerFocus  :call <SID>focusrunner()<CR>
+nnoremap <silent> <Plug>TermRunnerCmd    :call <SID>sendtorunner('runner > ')<CR>
 nnoremap <silent> <Plug>TermRunnerKill   :call <SID>killrunner()<CR>
-
-let g:term_runner_default_mappings = get(g:, 'term_runner_default_mappings',
-    \[
-    \{ 'key': 'e', 'fn': 'TermRunner' },
-    \{ 'key': 't', 'fn': 'TermRunnerTab' },
-    \{ 'key': 's', 'fn': 'TermRunnerSplit' },
-    \{ 'key': 'v', 'fn': 'TermRunnerVSplit' },
-    \{ 'key': '!', 'fn': 'TermSendCmd' },
-    \{ 'key': 'k', 'fn': 'TermRunnerKill' }
-    \]
-\)
 
 for g:mm in g:term_runner_default_mappings
     if empty(maparg('!' . g:mm['key'], 'n'))
