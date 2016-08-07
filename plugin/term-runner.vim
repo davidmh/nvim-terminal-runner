@@ -16,8 +16,8 @@ let g:term_runner_shell = get(g:, 'term_runner_shell', $SHELL)
 let g:term_runner_default_mappings = get(g:, 'term_runner_default_mappings',
     \[{ 'key': 'e', 'fn': 'TermRunner' }
     \,{ 'key': 't', 'fn': 'TermRunnerTab' }
-    \,{ 'key': 's', 'fn': 'TermRunnerSplit' }
-    \,{ 'key': 'v', 'fn': 'TermRunnerVSplit' }
+    \,{ 'key': '\', 'fn': 'TermRunnerSplit' }
+    \,{ 'key': '-', 'fn': 'TermRunnerVSplit' }
     \,{ 'key': 'f', 'fn': 'TermRunnerFocus' }
     \,{ 'key': '!', 'fn': 'TermRunnerCmd' }
     \,{ 'key': 'k', 'fn': 'TermRunnerKill' }

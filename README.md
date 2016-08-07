@@ -31,15 +31,15 @@ Kill the runner
 Default mappings
 ----------------
 
-|normal mode |maps to                  |
-|------------|:------------------------|
-|`!e`        |`<Plug>TermRunner`       |
-|`!t`        |`<Plug>TermRunnerTab`    |
-|`!s`        |`<Plug>TermRunnerSplit`  |
-|`!v`        |`<Plug>TermRunnerVSplit` |
-|`!f`        |`<Plug>TermRunnerFocus`  |
-|`!!`        |`<Plug>TermRunnerCmd`    |
-|`!k`        |`<Plug>TermRunnerKill`   |
+|normal mode| maps to                 |
+|-----------|:------------------------|
+|`!e`       | `<Plug>TermRunner`      |
+|`!t`       | `<Plug>TermRunnerTab`   |
+|`!-`       | `<Plug>TermRunnerSplit` |
+|`!\`       | `<Plug>TermRunnerVSplit`|
+|`!f`       | `<Plug>TermRunnerFocus` |
+|`!!`       | `<Plug>TermRunnerCmd`   |
+|`!k`       | `<Plug>TermRunnerKill`  |
 
 The defaults can be disabled by setting the variable
 `g:term_runner_default_mappings`
