@@ -11,25 +11,26 @@ endif
 
 " options
 let g:term_runner_loaded = 1
-let g:term_runner_suggest = get(g:, 'term_runner_suggest', v:false)
 let g:term_runner_shell = get(g:, 'term_runner_shell', $SHELL)
 let g:term_runner_default_mappings = get(g:, 'term_runner_default_mappings',
-    \[{ 'key': 'e', 'fn': 'TermRunner' }
-    \,{ 'key': 't', 'fn': 'TermRunnerTab' }
-    \,{ 'key': '\', 'fn': 'TermRunnerSplit' }
-    \,{ 'key': '-', 'fn': 'TermRunnerVSplit' }
-    \,{ 'key': 'f', 'fn': 'TermRunnerFocus' }
-    \,{ 'key': '!', 'fn': 'TermRunnerCmd' }
-    \,{ 'key': 'k', 'fn': 'TermRunnerKill' }
+    \[{ 'mode': 'n', 'key': '!e', 'fn': 'TermRunner' }
+    \,{ 'mode': 'n', 'key': '!t', 'fn': 'TermRunnerTab' }
+    \,{ 'mode': 'n', 'key': '!-', 'fn': 'TermRunnerSplit' }
+    \,{ 'mode': 'n', 'key': '!\', 'fn': 'TermRunnerVSplit' }
+    \,{ 'mode': 'n', 'key': '!f', 'fn': 'TermRunnerFocus' }
+    \,{ 'mode': 'n', 'key': '!!', 'fn': 'TermRunnerCmd' }
+    \,{ 'mode': 'n', 'key': '!s', 'fn': 'TermRunnerSendLine' }
+    \,{ 'mode': 'v', 'key': '!s', 'fn': 'TermRunnerSendRange' }
+    \,{ 'mode': 'n', 'key': '!k', 'fn': 'TermRunnerKill' }
     \]
 \)
 
 " internal
-let s:runner_pid = v:false
+let s:runner_pid = get(s:, 'runner_pid', v:false)
 
 function! s:openrunner(target, ...) abort
     if s:runner_pid != v:false
-        return 'You already have an open runner'
+        echom 'You already have an open runner'
     else
         let l:start_writing = (a:0 >= 1) ? a:1 : v:false
         exec 'bot' a:target
@@ -45,16 +46,37 @@ function! s:openrunner(target, ...) abort
     endif
 endfunction
 
-function! s:sendtorunner(prompt) abort
-    let l:cmd = input(a:prompt, '', 'shellcmd')
+function! s:promtforcommand(prompt) abort
+    let l:cmd = input(a:prompt)
     if s:runner_pid == v:false
         call <SID>openrunner('wincmd s')
     endif
-    call jobsend(s:runner_pid, [l:cmd, ''])
+    call s:sendtorunner(l:cmd)
+endfunction
+
+function! s:focusrunner() abort
+    if s:runner_pid != v:false
+        tabnew TermRunner
+        startinsert
+    else
+        echom 'No runner to zoom into'
+    end
+endfunction
+
+function! s:sendtorunner(cmd) abort
+    if s:runner_pid != v:false
+        call jobsend(s:runner_pid, [a:cmd, ''])
+    endif
+endfunction
+
+function! s:getvisualrange()
+    return getline("'<")[getpos("'<")[2]-1:getpos("'>")[2]-1]
 endfunction
 
 function! s:killrunner() abort
-    call jobstop(s:runner_pid)
+    if s:runner_pid != v:false
+        call jobstop(s:runner_pid)
+    endif
 endfunction
 
 function! s:clearterm() abort
@@ -62,30 +84,23 @@ function! s:clearterm() abort
     bdelete! TermRunner
 endfunction
 
-function! s:focusrunner() abort
-    if s:runner_pid == v:false
-        echom 'No runner to zoom into'
-    else
-        tabnew TermRunner
-        startinsert
-    end
-endfunction
-
 augroup TermRunner
     autocmd!
     autocmd TermClose TermRunner call <SID>clearterm()
 augroup END
 
-nnoremap <silent> <Plug>TermRunner       :call <SID>openrunner('', v:true)<CR>
-nnoremap <silent> <Plug>TermRunnerTab    :call <SID>openrunner('tabedit', v:true)<CR>
-nnoremap <silent> <Plug>TermRunnerSplit  :call <SID>openrunner('wincmd s')<CR>
-nnoremap <silent> <Plug>TermRunnerVSplit :call <SID>openrunner('wincmd v')<CR>
-nnoremap <silent> <Plug>TermRunnerFocus  :call <SID>focusrunner()<CR>
-nnoremap <silent> <Plug>TermRunnerCmd    :call <SID>sendtorunner('runner > ')<CR>
-nnoremap <silent> <Plug>TermRunnerKill   :call <SID>killrunner()<CR>
+nnoremap <silent> <Plug>TermRunner          :call <SID>openrunner('', v:true)<CR>
+nnoremap <silent> <Plug>TermRunnerTab       :call <SID>openrunner('tabedit', v:true)<CR>
+nnoremap <silent> <Plug>TermRunnerSplit     :call <SID>openrunner('wincmd s')<CR>
+nnoremap <silent> <Plug>TermRunnerVSplit    :call <SID>openrunner('wincmd v')<CR>
+nnoremap <silent> <Plug>TermRunnerFocus     :call <SID>focusrunner()<CR>
+nnoremap <silent> <Plug>TermRunnerCmd       :call <SID>promtforcommand('runner > ')<CR>
+nnoremap <silent> <Plug>TermRunnerSendLine  :call <SID>sendtorunner(getline('.'))<CR>
+vnoremap <silent> <Plug>TermRunnerSendRange :call <SID>sendtorunner(<SID>getvisualrange())<CR>
+nnoremap <silent> <Plug>TermRunnerKill      :call <SID>killrunner()<CR>
 
 for s:mm in g:term_runner_default_mappings
-    if empty(maparg('!' . s:mm['key'], 'n'))
-        exec printf('nmap !%s <Plug>%s',  s:mm['key'], s:mm['fn'])
+    if empty(maparg('!' . s:mm['key'], s:mm['mode']))
+        exec printf('%smap %s <Plug>%s', s:mm['mode'], s:mm['key'], s:mm['fn'])
     endif
 endfor
