@@ -26,10 +26,10 @@ let g:term_runner_default_mappings = get(g:, 'term_runner_default_mappings',
 \)
 
 " internal
-let s:runner_pid = get(s:, 'runner_pid', v:false)
+let s:runner_pid = get(s:, 'runner_pid', 0)
 
 function! s:openrunner(target, ...) abort
-    if s:runner_pid != v:false
+    if s:runner_pid != 0
         echom 'You already have an open runner'
     else
         let l:start_writing = (a:0 >= 1) ? a:1 : v:false
@@ -48,14 +48,14 @@ endfunction
 
 function! s:promtforcommand(prompt) abort
     let l:cmd = input(a:prompt)
-    if s:runner_pid == v:false
+    if s:runner_pid == 0
         call <SID>openrunner('wincmd s')
     endif
     call s:sendtorunner(l:cmd)
 endfunction
 
 function! s:focusrunner() abort
-    if s:runner_pid != v:false
+    if s:runner_pid != 0
         tabnew TermRunner
         startinsert
     else
@@ -64,7 +64,7 @@ function! s:focusrunner() abort
 endfunction
 
 function! s:sendtorunner(cmd) abort
-    if s:runner_pid != v:false
+    if s:runner_pid != 0
         call jobsend(s:runner_pid, [a:cmd, ''])
     endif
 endfunction
@@ -74,13 +74,13 @@ function! s:getvisualrange()
 endfunction
 
 function! s:killrunner() abort
-    if s:runner_pid != v:false
+    if s:runner_pid != 0
         call jobstop(s:runner_pid)
     endif
 endfunction
 
 function! s:clearterm() abort
-    let s:runner_pid = v:false
+    let s:runner_pid = 0
     bdelete! TermRunner
 endfunction
 
