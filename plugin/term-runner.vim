@@ -20,7 +20,6 @@ let g:term_runner_default_mappings = get(g:, 'term_runner_default_mappings',
     \,{ 'mode': 'n', 'key': '!f', 'fn': 'TermRunnerFocus' }
     \,{ 'mode': 'n', 'key': '!!', 'fn': 'TermRunnerCmd' }
     \,{ 'mode': 'n', 'key': '!s', 'fn': 'TermRunnerSendLine' }
-    \,{ 'mode': 'v', 'key': '!s', 'fn': 'TermRunnerSendRange' }
     \,{ 'mode': 'n', 'key': '!k', 'fn': 'TermRunnerKill' }
     \]
 \)
@@ -73,6 +72,12 @@ function! s:getvisualrange()
     return getline("'<")[getpos("'<")[2]-1:getpos("'>")[2]-1]
 endfunction
 
+function! s:sendrange() range
+    if s:runner_pid != 0
+        call jobsend(s:runner_pid, add(getline(a:firstline, a:lastline), ''))
+    endif
+endfunction
+
 function! s:killrunner() abort
     if s:runner_pid != 0
         call jobstop(s:runner_pid)
@@ -96,8 +101,8 @@ nnoremap <silent> <Plug>TermRunnerVSplit    :call <SID>openrunner('wincmd v')<CR
 nnoremap <silent> <Plug>TermRunnerFocus     :call <SID>focusrunner()<CR>
 nnoremap <silent> <Plug>TermRunnerCmd       :call <SID>promtforcommand('runner > ')<CR>
 nnoremap <silent> <Plug>TermRunnerSendLine  :call <SID>sendtorunner(getline('.'))<CR>
-vnoremap <silent> <Plug>TermRunnerSendRange :call <SID>sendtorunner(<SID>getvisualrange())<CR>
 nnoremap <silent> <Plug>TermRunnerKill      :call <SID>killrunner()<CR>
+command! -range TermRunnerSendRange <line1>,<line2>call <SID>sendrange()
 
 for s:mm in g:term_runner_default_mappings
     if empty(maparg('!' . s:mm['key'], s:mm['mode']))

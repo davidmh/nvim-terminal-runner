@@ -42,9 +42,7 @@ Default mappings
 |`!s`       | `<Plug>TermRunnerSendLine`  |
 |`!k`       | `<Plug>TermRunnerKill`      |
 
-|visual mode| maps to                     |
-|-----------|:----------------------------|
-|`!s`       | `<Plug>TermRunnerSendRange` |
+To send a range, you can use `TermRunnerSendRange` in the command line while in visual mode.
 
 The defaults can be disabled by setting the variable
 `g:term_runner_default_mappings`
