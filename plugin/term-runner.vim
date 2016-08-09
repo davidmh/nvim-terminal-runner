@@ -1,6 +1,6 @@
 " term-runner - wrapper to use Neovim's terminal as a runner
 " Maintainer:   David M <david.mejorado@gmail.com>
-" Version:      0.2
+" Version:      0.4
 "
 " Inspired from VtrRunner, by Chris Toomey
 " https://github.com/christoomey/vim-tmux-runner
@@ -20,16 +20,15 @@ let g:term_runner_default_mappings = get(g:, 'term_runner_default_mappings',
     \,{ 'mode': 'n', 'key': '!f', 'fn': 'TermRunnerFocus' }
     \,{ 'mode': 'n', 'key': '!!', 'fn': 'TermRunnerCmd' }
     \,{ 'mode': 'n', 'key': '!s', 'fn': 'TermRunnerSendLine' }
-    \,{ 'mode': 'v', 'key': '!s', 'fn': 'TermRunnerSendRange' }
     \,{ 'mode': 'n', 'key': '!k', 'fn': 'TermRunnerKill' }
     \]
 \)
 
 " internal
-let s:runner_pid = get(s:, 'runner_pid', v:false)
+let s:runner_pid = get(s:, 'runner_pid', 0)
 
 function! s:openrunner(target, ...) abort
-    if s:runner_pid != v:false
+    if s:runner_pid != 0
         echom 'You already have an open runner'
     else
         let l:start_writing = (a:0 >= 1) ? a:1 : v:false
@@ -48,14 +47,14 @@ endfunction
 
 function! s:promtforcommand(prompt) abort
     let l:cmd = input(a:prompt)
-    if s:runner_pid == v:false
+    if s:runner_pid == 0
         call <SID>openrunner('wincmd s')
     endif
     call s:sendtorunner(l:cmd)
 endfunction
 
 function! s:focusrunner() abort
-    if s:runner_pid != v:false
+    if s:runner_pid != 0
         tabnew TermRunner
         startinsert
     else
@@ -64,7 +63,7 @@ function! s:focusrunner() abort
 endfunction
 
 function! s:sendtorunner(cmd) abort
-    if s:runner_pid != v:false
+    if s:runner_pid != 0
         call jobsend(s:runner_pid, [a:cmd, ''])
     endif
 endfunction
@@ -73,14 +72,20 @@ function! s:getvisualrange()
     return getline("'<")[getpos("'<")[2]-1:getpos("'>")[2]-1]
 endfunction
 
+function! s:sendrange() range
+    if s:runner_pid != 0
+        call jobsend(s:runner_pid, add(getline(a:firstline, a:lastline), ''))
+    endif
+endfunction
+
 function! s:killrunner() abort
-    if s:runner_pid != v:false
+    if s:runner_pid != 0
         call jobstop(s:runner_pid)
     endif
 endfunction
 
 function! s:clearterm() abort
-    let s:runner_pid = v:false
+    let s:runner_pid = 0
     bdelete! TermRunner
 endfunction
 
@@ -96,8 +101,8 @@ nnoremap <silent> <Plug>TermRunnerVSplit    :call <SID>openrunner('wincmd v')<CR
 nnoremap <silent> <Plug>TermRunnerFocus     :call <SID>focusrunner()<CR>
 nnoremap <silent> <Plug>TermRunnerCmd       :call <SID>promtforcommand('runner > ')<CR>
 nnoremap <silent> <Plug>TermRunnerSendLine  :call <SID>sendtorunner(getline('.'))<CR>
-vnoremap <silent> <Plug>TermRunnerSendRange :call <SID>sendtorunner(<SID>getvisualrange())<CR>
 nnoremap <silent> <Plug>TermRunnerKill      :call <SID>killrunner()<CR>
+command! -range TermRunnerSendRange <line1>,<line2>call <SID>sendrange()
 
 for s:mm in g:term_runner_default_mappings
     if empty(maparg('!' . s:mm['key'], s:mm['mode']))
