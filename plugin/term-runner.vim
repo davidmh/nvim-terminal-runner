@@ -55,10 +55,18 @@ endfunction
 
 function! s:focusrunner() abort
     if s:runner_pid != 0
-        tabnew TermRunner
-        startinsert
+        let l:winn = bufwinnr('TermRunner')
+        let l:bufn = bufname('TermRunner')
+        if l:winn > -1
+            exec l:winn . 'wincmd w'
+            startinsert
+        elseif l:bufn !=# ''
+            exec 'rightbelow split TermRunner'
+            startinsert
+        endif
     else
-        echom 'No runner to zoom into'
+        call <SID>openrunner('wincmd s')
+        call <SID>focusrunner()
     end
 endfunction
 
