@@ -1,6 +1,6 @@
 " term-runner - wrapper to use Neovim's terminal as a runner
 " Maintainer:   David M <david.mejorado@gmail.com>
-" Version:      0.5
+" Version:      0.6
 "
 " Inspired from VtrRunner, by Chris Toomey
 " https://github.com/christoomey/vim-tmux-runner
@@ -31,10 +31,11 @@ function! s:openrunner(target, ...) abort
     if s:runner_pid != 0
         echom 'You already have an open runner'
     else
-        let l:start_writing = (a:0 >= 1) ? a:1 : v:false
+        let l:start_writing = (a:0 == 2) ? a:2 : v:false
+        let s:term_layout   = printf('TermRunner%s', (a:0 == 1) ? a:1 : '')
         exec 'bot' a:target
         exec printf('terminal//%s', g:term_runner_shell)
-        file TermRunner
+        exec printf("file %s", s:term_layout)
         let s:runner_pid = b:terminal_job_id
         if l:start_writing
             startinsert
@@ -48,24 +49,24 @@ endfunction
 function! s:promtforcommand(prompt) abort
     let l:cmd = input(a:prompt)
     if s:runner_pid == 0
-        call <SID>openrunner('wincmd s')
+        call <SID>openrunner('wincmd s', 'Split')
     endif
     call s:sendtorunner(l:cmd)
 endfunction
 
 function! s:focusrunner() abort
     if s:runner_pid != 0
-        let l:winn = bufwinnr('TermRunner')
-        let l:bufn = bufname('TermRunner')
+        let l:winn = bufwinnr(s:term_layout)
+        let l:bufn = bufname(s:term_layout)
         if l:winn > -1
             exec l:winn . 'wincmd w'
             startinsert
         elseif l:bufn !=# ''
-            exec 'rightbelow split TermRunner'
+            exec printf('rightbelow split %s', s:term_layout)
             startinsert
         endif
     else
-        call <SID>openrunner('wincmd s')
+        call <SID>openrunner('wincmd s', 'Split')
         call <SID>focusrunner()
     end
 endfunction
@@ -94,18 +95,18 @@ endfunction
 
 function! s:clearterm() abort
     let s:runner_pid = 0
-    bdelete! TermRunner
+    exec printf("bdelete! %s", s:term_layout)
 endfunction
 
 augroup TermRunner
     autocmd!
-    autocmd TermClose TermRunner call <SID>clearterm()
+    autocmd TermClose TermRunner* call <SID>clearterm()
 augroup END
 
-nnoremap <silent> <Plug>TermRunner          :call <SID>openrunner('', v:true)<CR>
-nnoremap <silent> <Plug>TermRunnerTab       :call <SID>openrunner('tabedit', v:true)<CR>
-nnoremap <silent> <Plug>TermRunnerSplit     :call <SID>openrunner('wincmd s')<CR>
-nnoremap <silent> <Plug>TermRunnerVSplit    :call <SID>openrunner('wincmd v')<CR>
+nnoremap <silent> <Plug>TermRunner          :call <SID>openrunner('', '', v:true)<CR>
+nnoremap <silent> <Plug>TermRunnerTab       :call <SID>openrunner('tabedit', 'Tab', v:true)<CR>
+nnoremap <silent> <Plug>TermRunnerSplit     :call <SID>openrunner('wincmd s', 'Split')<CR>
+nnoremap <silent> <Plug>TermRunnerVSplit    :call <SID>openrunner('wincmd v', 'VSplit')<CR>
 nnoremap <silent> <Plug>TermRunnerFocus     :call <SID>focusrunner()<CR>
 nnoremap <silent> <Plug>TermRunnerCmd       :call <SID>promtforcommand('runner > ')<CR>
 nnoremap <silent> <Plug>TermRunnerSendLine  :call <SID>sendtorunner(getline('.'))<CR>

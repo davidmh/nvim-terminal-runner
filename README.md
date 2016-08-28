@@ -50,6 +50,19 @@ The defaults can be disabled by setting the variable
 let g:term_runner_default_mappings = []
 ```
 
+Terminal size
+-------------
+
+If the runner is created as either an horizontal or vertical split, the buffer
+will be named `TermRunnerSplit` and `TermRunnerVSplit`.
+
+You can manage the size of the runner by hooking an autocmd to that name
+
+```
+autocmd! BufFilePost TermRunnerSplit  exe "15wincmd _"
+autocmd! BufFilePost TermRunnerVSplit exe "60wincmd |"
+```
+
 To-do
 -----
 
